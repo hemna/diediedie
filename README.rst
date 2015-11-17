@@ -4,16 +4,14 @@ hpe-openstack-tools
 
 Dumping ground for general purpose OpenStack tools and scripts
 
-Please feel here a long description which must be at least 3 lines wrapped on
-80 cols, so that distribution package maintainers can use it in their packages.
-Note that this is a hard requirement.
+This is a repository of tools and scripts that we use to test OpenStack
+related things.
 
 * Free software: Apache license
-* Documentation: http://docs.openstack.org/developer/hpe-openstack-tools
-* Source: http://git.openstack.org/cgit/openstack/hpe-openstack-tools
-* Bugs: http://bugs.launchpad.net/replace with the name of the project on launchpad
+* Source: http://github.com/WaltHP/hpe-openstack-tools
 
 Features
 --------
 
-* TODO
+* brick_resize -- test the resizing of a cinder volume on a local host with 
+  the os-brick library
