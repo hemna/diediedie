@@ -27,6 +27,7 @@ from oslo_log import log
 from oslo_utils import netutils
 
 from hpe_os_tools import auth_args
+from hpe_os_tools import utils
 from os_brick.initiator import connector
 
 parser = auth_args.parser
@@ -73,6 +74,7 @@ def build_cinder(args):
 
 
 def main():
+    """The main."""
     args = parser.parse_args()
     initiator = get_initiator()
     client = build_cinder(args)
@@ -87,19 +89,20 @@ def main():
 
         sys.exit(0)
 
-    for vol in volumes:
-        if vol.status == 'in-use' and vol.id == args.volume:
-            LOG.debug("id = %s", vol.id)
-            conn = client.volumes.initialize_connection(vol, initiator)
-            LOG.debug("conn = %s", conn)
-            sys.exit(-1)
-            b = connector.InitiatorConnector.factory(
-                conn['driver_volume_type'], 'sudo',
-                use_multipath=initiator['multipath'])
-            LOG.debug("call resize for %s", conn)
-            new_size = b.extend_volume(conn['data'])
-            LOG.debug("New size for device = %s" %
-                      new_size)
+    info = dict()
+    volume = client.volumes.get(args.volume)
+    info.update(volume._info)
+    info.pop('links', None)
+
+    # now fetch the volume paths
+    if volume.status == 'in-use':
+        conn = client.volumes.initialize_connection(volume, initiator)
+        b = connector.InitiatorConnector.factory(
+            conn['driver_volume_type'], 'sudo',
+            use_multipath=initiator['multipath'])
+        info['system-paths'] = b.get_volume_paths(conn['data'])
+
+    utils.print_dict(info)
 
 
 if __name__ == "__main__":
