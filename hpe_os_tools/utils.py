@@ -15,8 +15,11 @@
 import os
 import sys
 
+from cinderclient import client as cinder
+from os_brick.initiator import connector
 from oslo_log import log as logging
 from oslo_utils import encodeutils
+from oslo_utils import netutils
 import prettytable
 import six
 
@@ -24,8 +27,35 @@ import six
 LOG = logging.getLogger(__name__)
 
 
+def get_initiator():
+    """Get the initiator connector dict."""
+    # Get the intiator side connector properties
+    my_ip = netutils.get_my_ipv4()
+    initiator = connector.get_connector_properties('sudo', my_ip, True, False)
+    LOG.debug("initiator = %s", initiator)
+    return initiator
+
+
+def build_cinder(args):
+    """Build the cinder client object."""
+    (os_username, os_password, os_tenant_name,
+     os_auth_url, os_tenant_id) = (
+        args.os_username, args.os_password, args.os_tenant_name,
+        args.os_auth_url, args.os_tenant_id)
+
+    # force this to version 2.0 of Cinder API
+    api_version = 2
+
+    c = cinder.Client(api_version,
+                      os_username, os_password,
+                      os_tenant_name,
+                      os_auth_url,
+                      tenant_id=os_tenant_id)
+    return c
+
+
 def env(*vars, **kwargs):
-    """returns the first environment variable set.
+    """This returns the first environment variable set.
 
     if none are non-empty, defaults to '' or keyword arg default
 

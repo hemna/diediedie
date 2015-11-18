@@ -21,10 +21,8 @@ brick to extend_volume.
 """
 import sys
 
-from cinderclient import client as cinder
 from oslo_config import cfg
 from oslo_log import log
-from oslo_utils import netutils
 
 from hpe_os_tools import auth_args
 from hpe_os_tools import utils
@@ -46,38 +44,11 @@ log.setup(CONF, 'brick')
 LOG = log.getLogger(__name__)
 
 
-def get_initiator():
-    """Get the initiator connector dict."""
-    # Get the intiator side connector properties
-    my_ip = netutils.get_my_ipv4()
-    initiator = connector.get_connector_properties('sudo', my_ip, True, False)
-    LOG.debug("initiator = %s", initiator)
-    return initiator
-
-
-def build_cinder(args):
-    """Build the cinder client object."""
-    (os_username, os_password, os_tenant_name,
-     os_auth_url, os_tenant_id) = (
-        args.os_username, args.os_password, args.os_tenant_name,
-        args.os_auth_url, args.os_tenant_id)
-
-    # force this to version 2.0 of Cinder API
-    api_version = 2
-
-    c = cinder.Client(api_version,
-                      os_username, os_password,
-                      os_tenant_name,
-                      os_auth_url,
-                      tenant_id=os_tenant_id)
-    return c
-
-
 def main():
     """The main."""
     args = parser.parse_args()
-    initiator = get_initiator()
-    client = build_cinder(args)
+    initiator = utils.get_initiator()
+    client = utils.build_cinder(args)
 
     volumes = client.volumes.list(True)
     if args.list:
@@ -91,7 +62,14 @@ def main():
 
     info = dict()
     volume = client.volumes.get(args.volume)
-    info.update(volume._info)
+    info['id'] = volume._info['id']
+    info['encrypted'] = volume._info['encrypted']
+    info['multiattach'] = volume._info['multiattach']
+    info['status'] = volume._info['status']
+    info['host'] = volume._info['os-vol-host-attr:host']
+    info['size'] = volume._info['size']
+    info['volume_type'] = volume._info['volume_type']
+    # info.update(volume._info)
     info.pop('links', None)
 
     # now fetch the volume paths
