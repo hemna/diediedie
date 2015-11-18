@@ -16,4 +16,4 @@ import pbr.version
 
 
 __version__ = pbr.version.VersionInfo(
-    'hpe_os_tools').version_string()
+    'diediedie').version_string()

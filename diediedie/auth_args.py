@@ -18,7 +18,7 @@ Simply import this and use parser.
 """
 import argparse
 
-from hpe_os_tools import utils
+from diediedie import utils
 
 parser = argparse.ArgumentParser()
 # The default OpenStack Authentication args

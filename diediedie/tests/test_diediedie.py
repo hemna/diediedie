@@ -13,16 +13,16 @@
 # under the License.
 
 """
-test_hpe_os_tools
+test_diediedie
 ----------------------------------
 
-Tests for `hpe_os_tools` module.
+Tests for `diediedie` module.
 """
 
-from hpe_os_tools.tests import base
+from diediedie.tests import base
 
 
-class TestHpe_os_tools(base.TestCase):
+class TestDiediedie(base.TestCase):
 
     def test_something(self):
         pass

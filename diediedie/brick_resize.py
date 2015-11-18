@@ -24,8 +24,8 @@ import sys
 from oslo_config import cfg
 from oslo_log import log
 
-from hpe_os_tools import auth_args
-from hpe_os_tools import utils
+from diediedie import auth_args
+from diediedie import utils
 from os_brick.initiator import connector
 
 parser = auth_args.parser

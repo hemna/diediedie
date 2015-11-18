@@ -1,7 +1,7 @@
 [run]
 branch = True
-source = hpe_os_tools
-omit = hpe_os_tools/openstack/*
+source = diediedie
+omit = diediedie/openstack/*
 
 [report]
 ignore_errors = True
