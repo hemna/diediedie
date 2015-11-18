@@ -140,6 +140,8 @@ def print_dict(d, property="Property"):
     pt.aligns = ['l', 'l']
     for r in six.iteritems(d):
         r = list(r)
+        if isinstance(r[1], list):
+            r[1] = '\n'.join(r[1])
         if isinstance(r[1], six.string_types) and "\r" in r[1]:
             r[1] = r[1].replace("\r", " ")
         pt.add_row(r)
