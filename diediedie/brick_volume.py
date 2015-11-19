@@ -69,6 +69,7 @@ def main():
     info['host'] = volume._info['os-vol-host-attr:host']
     info['size'] = volume._info['size']
     info['volume_type'] = volume._info['volume_type']
+    info['attachments'] = volume._info['attachments']
     # info.update(volume._info)
     info.pop('links', None)
 
@@ -80,7 +81,7 @@ def main():
             use_multipath=initiator['multipath'])
         info['system-paths'] = b.get_volume_paths(conn['data'])
 
-    utils.print_dict(info)
+    utils.print_dict(info, value_align='l', disable_unicode=True)
 
 
 if __name__ == "__main__":

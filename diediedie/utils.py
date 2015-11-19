@@ -13,6 +13,7 @@
 """Utilities and helper functions."""
 
 import os
+import pprint
 import sys
 
 from cinderclient import client as cinder
@@ -134,14 +135,36 @@ def print_list(objs, fields, exclude_unavailable=False, formatters=None,
     _print(pt, order_by)
 
 
-def print_dict(d, property="Property"):
+def no_unicode(object, context, maxlevels, level):
+    """ change unicode u'foo' to string 'foo' when pretty printing"""
+    if pprint._type(object) is unicode:
+        object = str(object)
+    return pprint._safe_repr(object, context, maxlevels, level)
+
+
+def print_dict(d, property="Property", value_align="c",
+               disable_unicode=False):
     """Print out a dict."""
+    pp = pprint.PrettyPrinter(indent=2)
+    # disable the annoying leading 'u'
+    if disable_unicode:
+        pp.format = no_unicode
     pt = prettytable.PrettyTable([property, 'Value'], caching=False)
-    pt.aligns = ['l', 'l']
+    # pt.aligns = ['l', 'l']
+    pt.align['Value'] = value_align
     for r in six.iteritems(d):
         r = list(r)
+
         if isinstance(r[1], list):
-            r[1] = '\n'.join(r[1])
+            if isinstance(r[1][0], six.string_types):
+                r[1] = '\n'.join(r[1])
+            else:
+                tmp = []
+                for item in r[1]:
+                    item_str = pp.pformat(item)
+                    tmp.append(item_str)
+
+                r[1] = '\n'.join(tmp)
         if isinstance(r[1], six.string_types) and "\r" in r[1]:
             r[1] = r[1].replace("\r", " ")
         pt.add_row(r)
