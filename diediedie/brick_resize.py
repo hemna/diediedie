@@ -64,7 +64,6 @@ def main():
             LOG.debug("id = %s", vol.id)
             conn = client.volumes.initialize_connection(vol, initiator)
             LOG.debug("conn = %s", conn)
-            sys.exit(-1)
             b = connector.InitiatorConnector.factory(
                 conn['driver_volume_type'], 'sudo',
                 use_multipath=initiator['multipath'])
