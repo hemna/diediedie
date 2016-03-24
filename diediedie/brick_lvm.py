@@ -44,9 +44,13 @@ def main():
     args = parser.parse_args()
     vg_name = args.group
     #vg = lvm.LVM(vg_name, 'sudo')
-    groups = lvm.LVM.get_all_volume_groups('sudo',vg_name=vg_name)
+    root_helper = 'sudo'
+    groups = lvm.LVM.get_all_volume_groups(root_helper, vg_name=vg_name)
     for group in groups:
         utils.print_dict(group, value_align='l', disable_unicode=True)
+        vols = lvm.LVM.get_lv_info(root_helper, vg_name=group['name'])
+        for vol in vols:
+            utils.print_dict(vol)
 
 if __name__ == "__main__":
     main()
