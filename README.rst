@@ -17,3 +17,4 @@ Features
   the os-brick library
 * brick_volume -- Dump out the volume information for an attached cinder volume
   on the current host.
+* brick_attach_detach -- Attach a cinder volume to local host, and then read/write.

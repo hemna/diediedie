@@ -17,7 +17,9 @@ import pprint
 import sys
 
 from cinderclient import client as cinder
+from keystoneclient.v2_0 import client as keystone
 from os_brick.initiator import connector
+from oslo_context import context
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 from oslo_utils import netutils
@@ -32,7 +34,7 @@ def get_initiator():
     """Get the initiator connector dict."""
     # Get the intiator side connector properties
     my_ip = netutils.get_my_ipv4()
-    initiator = connector.get_connector_properties('sudo', my_ip, True, False)
+    initiator = connector.get_connector_properties('sudo', my_ip, False, False)
     LOG.debug("initiator = %s", initiator)
     return initiator
 
@@ -169,3 +171,21 @@ def print_dict(d, property="Property", value_align="c",
             r[1] = r[1].replace("\r", " ")
         pt.add_row(r)
     _print(pt, property)
+
+
+def build_keystone(args):
+    """Build the keystone client object."""
+    keystone_client = keystone.Client(username=args.os_username,
+                                      password=args.os_password,
+                                      tenant_id=args.os_tenant_id,
+                                      tenant_name=args.os_tenant_name,
+                                      auth_url=args.os_auth_url)
+    return keystone_client
+
+
+def get_context(args):
+    """Get context."""
+    keystone_client = build_keystone(args)
+    ctxt = context.RequestContext(auth_token=keystone_client.auth_token,
+                                  tenant=keystone_client.tenant_id)
+    return ctxt
