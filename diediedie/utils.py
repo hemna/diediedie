@@ -17,9 +17,7 @@ import pprint
 import sys
 
 from cinderclient import client as cinder
-from keystoneclient.v2_0 import client as keystone
 from os_brick.initiator import connector
-from oslo_context import context
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 from oslo_utils import netutils
@@ -138,7 +136,7 @@ def print_list(objs, fields, exclude_unavailable=False, formatters=None,
 
 
 def no_unicode(object, context, maxlevels, level):
-    """ change unicode u'foo' to string 'foo' when pretty printing"""
+    """Change unicode u'foo' to string 'foo' when pretty printing"""
     if pprint._type(object) is unicode:
         object = str(object)
     return pprint._safe_repr(object, context, maxlevels, level)
@@ -171,21 +169,3 @@ def print_dict(d, property="Property", value_align="c",
             r[1] = r[1].replace("\r", " ")
         pt.add_row(r)
     _print(pt, property)
-
-
-def build_keystone(args):
-    """Build the keystone client object."""
-    keystone_client = keystone.Client(username=args.os_username,
-                                      password=args.os_password,
-                                      tenant_id=args.os_tenant_id,
-                                      tenant_name=args.os_tenant_name,
-                                      auth_url=args.os_auth_url)
-    return keystone_client
-
-
-def get_context(args):
-    """Get context."""
-    keystone_client = build_keystone(args)
-    ctxt = context.RequestContext(auth_token=keystone_client.auth_token,
-                                  tenant=keystone_client.tenant_id)
-    return ctxt
