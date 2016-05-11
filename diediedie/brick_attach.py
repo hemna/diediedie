@@ -24,8 +24,6 @@ from os_brick.initiator import connector
 
 from diediedie import utils 
 
-sys.path.insert(0, os.path.abspath('..'))
-
 
 def iscsi_func():
     puts(colored.green("Enter iSCSI information"))
