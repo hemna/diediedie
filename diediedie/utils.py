@@ -32,7 +32,7 @@ def get_initiator():
     """Get the initiator connector dict."""
     # Get the intiator side connector properties
     my_ip = netutils.get_my_ipv4()
-    initiator = connector.get_connector_properties('sudo', my_ip, True, False)
+    initiator = connector.get_connector_properties('sudo', my_ip, False, False)
     LOG.debug("initiator = %s", initiator)
     return initiator
 
@@ -136,7 +136,7 @@ def print_list(objs, fields, exclude_unavailable=False, formatters=None,
 
 
 def no_unicode(object, context, maxlevels, level):
-    """ change unicode u'foo' to string 'foo' when pretty printing"""
+    """Change unicode u'foo' to string 'foo' when pretty printing"""
     if pprint._type(object) is unicode:
         object = str(object)
     return pprint._safe_repr(object, context, maxlevels, level)
