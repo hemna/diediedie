@@ -8,7 +8,7 @@ This is a repository of tools and scripts that we use to test OpenStack
 related things.
 
 * Free software: Apache license
-* Source: http://github.com/WaltHP/diediedie
+* Source: http://github.com/hemna/diediedie
 
 Features
 --------
