@@ -29,37 +29,55 @@ from diediedie import utils
 from os_brick.initiator import connector
 
 parser = auth_args.parser
-parser.add_argument("-l", "--list",
-                    help="List available attached volumes",
-                    default=False, action="store_true")
-parser.add_argument("-v", "--volume",
-                    metavar="<cinder-volume-id>",
-                    help='Cinder volume id to test for resize')
 
 
 CONF = cfg.CONF
+DOMAIN = "brick"
+LOG = log.getLogger(DOMAIN)
 log.register_options(CONF)
-CONF([], project='brick', version='1.0')
-log.setup(CONF, 'brick')
-LOG = log.getLogger(__name__)
 
 
 def main():
     """The main."""
     args = parser.parse_args()
-    initiator = utils.get_initiator()
+    config_file = args.config_file
+    if not config_file:
+        config_file = ['--config-file', utils.DEFAULT_CONFIG_FILE]
+    CONF(config_file, project="brick", version='1.0')
+
+    utils.prepare_log()
+
     client = utils.build_cinder(args)
-    print(f"{client}")
+    LOG.info(f"{client}")
+    LOG.info("{}".format(dir(client)))
+
+    connector = {"connection_capabilities": ['vmware_service_instance_uuid:dfd3fd7e-3645-410e-b0e7-ce9fae84025a']}
+    # connector = {}
+    body = {"connector": connector}
+
+    vol_id = '0a103a19-ad01-4131-9ff2-ade3b59832c2'
+    volume = client.volumes.get(vol_id)
+
+    print(f"{volume}")
+    res, resp = client.volumes._action('os-migrate_volume_by_connector', volume, body)
+    LOG.info(f"{res},   {resp}")
+    sys.exit(0)
 
     volumes = client.volumes.list(True)
-    if args.list:
-        for vol in volumes:
-            if vol.status == 'in-use':
-                print("Name: '%(name)s' %(id)s Size:%(size)sG Type:%(type)s " %
-                      {'name': vol.name, 'id': vol.id, 'size': vol.size,
-                       'type': vol.volume_type})
-
+    for vol in volumes:
+        LOG.info(f"{vol}")
+        LOG.info("Name: '%(name)s' %(id)s Size:%(size)sG Type:%(type)s " %
+                  {'name': vol.name, 'id': vol.id, 'size': vol.size,
+                   'type': vol.volume_type})
+        #res, resp = client.volumes._action('os-migrate_volume_by_connector', vol, body)
+        #LOG.warning(f"{res}")
+        #LOG.warning(f"{resp}")
+        volume = client.volumes.get(vol.id)
+        print(f"{volume}")
         sys.exit(0)
+
+
+    sys.exit(0)
 
     info = dict()
     volume = client.volumes.get(args.volume)

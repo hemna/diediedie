@@ -13,11 +13,17 @@
 """Utilities and helper functions."""
 
 import os
+from pathlib import Path
 import pprint
 import sys
 
+from keystoneauth1 import loading
+from keystoneauth1 import session
+from keystoneauth1.identity import v3 as v3_auth
+
 from cinderclient import client as cinder
 from os_brick.initiator import connector
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 from oslo_utils import netutils
@@ -25,7 +31,40 @@ import prettytable
 import six
 
 
-LOG = logging.getLogger(__name__)
+DOMAIN = "brick"
+LOG = logging.getLogger(DOMAIN)
+CONF = cfg.CONF
+
+home = str(Path.home())
+DEFAULT_CONFIG_DIR = f"{home}/.config/diediedie/"
+DEFAULT_CONFIG_FILE = f"{home}/.config/diediedie/brick.conf"
+
+
+def prepare_log():
+    existing = logging.get_default_log_levels()
+
+    extra_log_level_defaults = [
+        'cinder=DEBUG',
+    ]
+    new = []
+
+    exist_dict = {}
+    for entry in existing:
+        e_arr = entry.split('=')
+        exist_dict[e_arr[0]] = e_arr[1]
+
+    for entry in extra_log_level_defaults:
+        e_arr = entry.split('=')
+        exist_dict[e_arr[0]] = e_arr[1]
+
+    for key in exist_dict:
+        new.append("{}={}".format(key, exist_dict[key]))
+
+    logging.set_defaults(default_log_levels=new)
+
+    #logging.register_options(CONF)
+    logging.setup(CONF, DOMAIN)
+
 
 
 def get_initiator():
@@ -37,21 +76,135 @@ def get_initiator():
     return initiator
 
 
+def get_v3_auth(*args, **kwargs):
+
+    v3_auth_url = kwargs["v3_auth_url"]
+    username = kwargs["os_username"]
+    user_id = kwargs["os_user_id"]
+    user_domain_name = kwargs["os_user_domain_name"]
+    user_domain_id = kwargs["os_user_domain_id"]
+    password = kwargs["os_password"]
+    project_id = kwargs["os_project_id"]
+    project_name = kwargs["os_project_name"]
+    project_domain_name = kwargs["os_project_domain_name"]
+    project_domain_id = kwargs["os_project_domain_id"]
+
+    return v3_auth.Password(
+        v3_auth_url,
+        username=username,
+        password=password,
+        user_id=user_id,
+        user_domain_name=user_domain_name,
+        user_domain_id=user_domain_id,
+        project_id=project_id,
+        project_name=project_name,
+        project_domain_name=project_domain_name,
+        project_domain_id=project_domain_id,
+    )
+
+
+def get_keystone_session(*args, **kwargs):
+    # first create a Keystone session
+    cacert = None
+    cert = None
+
+    insecure = True
+
+    if insecure:
+        verify = False
+    else:
+        verify = cacert or True
+
+    ks_session = session.Session(verify=verify, cert=cert)
+
+    username = kwargs["os_username"]
+
+    user_domain_name = kwargs["os_user_domain_name"]
+    user_domain_id = kwargs["os_user_domain_id"]
+
+    kwargs["v3_auth_url"] = kwargs["os_auth_url"]
+
+        # support only v3
+    auth = get_v3_auth(**kwargs)
+
+    ks_session.auth = auth
+    return ks_session
+
+
 def build_cinder(args):
     """Build the cinder client object."""
-    (os_username, os_password, os_tenant_name,
-     os_auth_url, os_tenant_id) = (
-        args.os_username, args.os_password, args.os_tenant_name,
-        args.os_auth_url, args.os_tenant_id)
+    (os_username, os_password,
+     os_user_domain_name,
+     os_auth_url,
+     os_auth_type,
+     os_region_name,
+     os_project_name,
+     os_project_id,
+     os_project_domain_name,
+     os_project_domain_id,
+     os_region_name,
+     os_user_domain_id,
+     os_user_domain_name,
+     os_user_id,
+     ) = (
+         args.os_username, args.os_password,
+         args.os_user_domain_name,
+         args.os_auth_url,
+         args.os_auth_type,
+         args.os_region_name,
+         args.os_project_name,
+         args.os_project_id,
+         args.os_project_domain_name,
+         args.os_project_domain_id,
+         args.os_region_name,
+         args.os_user_domain_id,
+         args.os_user_domain_name,
+         args.os_user_id,
+     )
+
+    args = {
+        "os_auth_url": os_auth_url,
+        "os_username": os_username,
+        "os_password": os_password,
+        "os_user_domain_name": os_user_domain_name,
+        "os_user_domain_id": os_user_domain_id,
+        "os_user_id": os_user_id,
+        "os_project_id": os_project_id,
+        "os_project_name": os_project_name,
+        "os_project_domain_name": os_project_domain_name,
+        "os_project_domain_id": os_project_domain_id
+    }
+
+    session =  get_keystone_session(**args)
+    LOG.info(f"{session}")
+
+    client_args = dict(
+        region_name=os_region_name,
+        service_type='volumev3',
+        service_name='',
+        os_endpoint='',
+        endpoint_type='publicURL',
+        insecure=False,
+        cacert=None,
+        auth_plugin=None,
+        http_log_debug=True,
+        session=session
+    )
 
     # force this to version 2.0 of Cinder API
-    api_version = 2
+    api_version = 3.70
+    #LOG.info(f"{args}")
+    #LOG.info("Logging in with")
+    #LOG.info(f"{api_version} {os_username} {os_password} {os_project_name} {os_auth_url}")
+    #LOG.info(f"{client_args}")
 
     c = cinder.Client(api_version,
-                      os_username, os_password,
-                      os_tenant_name,
+                      os_username,
+                      os_password,
+                      os_project_name,
                       os_auth_url,
-                      tenant_id=os_tenant_id)
+                      **client_args,
+                      )
     return c
 
 
